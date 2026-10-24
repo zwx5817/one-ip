@@ -4,8 +4,9 @@ compatibility_date = "2026-09-09"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-TURNSTILE_SITE_KEY = "0x4AAAAAAAFjLuzCgIGYzh34U"
 TIANDITU_TOKEN = "bed2c92db1541f2af8b80a1fcccbeb13"
+TURNSTILE_NONINTERACTIVE_HOSTNAMES = "ip-test.tesseract.kdns.fr"
+TURNSTILE_NONINTERACTIVE_SITE_KEY = "0x4AAAAAAFjLuzCgIGYZh34U"
 
 [assets]
 directory = "./dist"
