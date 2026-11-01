@@ -42,7 +42,7 @@ function loadWidget(id: Provider["id"], sitekey: string): Promise<WidgetApi> {
     script.src =
       id !== "recaptcha"
         ? "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-        : `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(sitekey)}`;
+        : `https://www.recaptcha.net/recaptcha/api.js?render=${encodeURIComponent(sitekey)}`;
     script.async = true;
     const timer = setTimeout(() => fail(), 15000);
     function fail() {
