@@ -1,46 +1,36 @@
 name: Sync upstream
 
 on:
-  schedule:
-    - cron: '23 4 * * *'
   workflow_dispatch:
 
 permissions:
-  contents: read
-
-concurrency:
-  group: sync-upstream
-  cancel-in-progress: false
+  contents: write
 
 jobs:
   sync:
-    if: github.event.repository.fork && (github.event_name == 'workflow_dispatch' || vars.AUTO_SYNC_UPSTREAM == 'true')
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
-      actions: write
-    env:
-      GH_TOKEN: ${{ github.token }}
-      REPO: ${{ github.repository }}
-      ENABLE_CF_DEPLOY: ${{ vars.ENABLE_CF_DEPLOY }}
     steps:
       - name: Sync without overwriting fork changes
-        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
+          
+          # 1. 查户口：确认你的仓库是从原作者那里 Fork 来的
           metadata=$(gh api "repos/$REPO")
           parent=$(jq -r '.parent.full_name' <<< "$metadata")
           branch=$(jq -r '.default_branch' <<< "$metadata")
+          
           if [ "$parent" != 'zhihui-hu/one-ip' ]; then
-            echo 'Only direct forks of zhihui-hu/one-ip are synchronized.'
+            echo '【拒绝】你的仓库不是直接从 zhihui-hu/one-ip Fork 来的，无法同步。'
             exit 0
           fi
-          before=$(gh api "repos/$REPO/commits/$branch" --jq '.sha')
-          # The GitHub merge-upstream endpoint fails on conflicts; no force reset.
+          
+          echo "【确认】上游仓库是: $parent，开始尝试合并..."
+          
+          # 2. 发起合并（这一句就是核心，GitHub会自动去拉原仓库代码）
+          # 如果发生冲突，这一句会直接报错退出，绝不动你的原代码
           gh api --method POST "repos/$REPO/merge-upstream" -f branch="$branch"
-          after=$(gh api "repos/$REPO/commits/$branch" --jq '.sha')
-          if [ "$before" != "$after" ] && [ "$ENABLE_CF_DEPLOY" = 'true' ]; then
-            # GITHUB_TOKEN pushes do not trigger push workflows. Dispatch explicitly.
-            gh workflow run pages.yml --repo "$REPO" --ref "$branch"
-          fi
+          
+          echo "【成功】合并完成！"
